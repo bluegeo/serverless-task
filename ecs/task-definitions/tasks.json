@@ -1,0 +1,14 @@
+[
+  {
+    "name": "${task_name}",
+    "image": "${repo_name}/${task_image}",
+    "essential": true,
+    "cpu": ${fargate_cpu},
+    "memory": ${fargate_memory},
+    "portMappings": [
+      {
+        "containerPort": 80
+      }
+    ]
+  }
+]
