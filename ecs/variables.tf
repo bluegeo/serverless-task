@@ -36,10 +36,10 @@ variable "task_names" {
   type = "list"
   default = ["tasks"]
 }
-variable "container_names" {
-  description = "Names of the containers associated with each task definition in the docker directory"
+variable "container_ports" {
+  description = "Each container is connected to the NLB through an individual port"
   type = "list"
-  default = ["tasks"]
+  default = [80]
 }
 variable "cpu" {
   description = "Fargate requires the CPU resources to be defined at the task level. These are ordered by names."

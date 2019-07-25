@@ -41,6 +41,12 @@ resource "aws_lb" "tasks" {
     Environment = "${var.app_name}-${var.environment}"
   }
 }
+output "load_balancer_arn" {
+  value = "${aws_lb.tasks.arn}"
+}
+output "nlb_dns" {
+  value = "${aws_lb.tasks.dns_name}"
+}
 
 // ELB Target Group
 resource "aws_lb_target_group" "tasks" {
@@ -86,7 +92,7 @@ data "template_file" "task_defn" {
 
   vars {
     task_name       = "${var.task_names[count.index]}"
-    task_image      = "${var.container_names[count.index]}"
+    task_image      = "${var.task_names[count.index]}"
     fargate_cpu    = "${var.cpu[count.index]}"
     fargate_memory = "${var.memory[count.index]}"
     repo_name      = "${var.ecr_repo_name}"
@@ -154,15 +160,10 @@ resource "aws_ecs_service" "tasks" {
   }
 
   load_balancer {
-    container_name = "${var.container_names[count.index]}"
-    container_port = 80
+    container_name = "${var.task_names[count.index]}"
+    container_port = "${var.container_ports[count.index]}"
     target_group_arn = "${aws_lb_target_group.tasks.arn}"
   }
-
-//  tags {
-//    Name = "${var.app_name}-${var.environment}-tasks"
-//    Environment = "${var.app_name}-${var.environment}"
-//  }
 }
 
 // ECR
@@ -178,7 +179,7 @@ resource "null_resource" "build_images" {
   count = "${length(var.task_names)}"
 
   provisioner "local-exec" {
-    command = "cd ${path.root}/ecs/docker/${var.container_names[count.index]} && docker build -t ${var.container_names[count.index]}:${var.container_names[count.index]} ."
+    command = "cd ${path.root}/ecs/docker && docker build -t ${var.task_names[count.index]}:${var.task_names[count.index]} -f ${var.task_names[count.index]} ."
   }
 }
 
@@ -191,7 +192,7 @@ data template_file "tasks" {
   vars = {
     region = "${var.aws_region}"
     profile = "${var.profile}"
-    image_tag = "${var.container_names[count.index]}"
+    image_tag = "${var.task_names[count.index]}"
     repository_url = "${aws_ecr_repository.tasks.repository_url}"
   }
 }
@@ -213,4 +214,12 @@ resource "null_resource" "upload_images" {
   provisioner "local-exec" {
     command = "${path.root}/ecs/ecr/${count.index}.sh"
   }
+}
+
+// Variable outputs for the API module
+output "task_names" {
+  value = "${var.task_names}"
+}
+output "container_ports" {
+  value = "${var.container_ports}"
 }

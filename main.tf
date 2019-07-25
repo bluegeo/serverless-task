@@ -54,6 +54,12 @@ module "api" {
   app_name = "${var.app_name}"
   environment = "${var.environment}"
   aws_region = "${var.aws_region}"
+  user_pool_arn = "${module.authentication.user_pool_arn}"
+  tasks_api_arn = "${module.iam.tasks_api_arn}"
+  load_balancer_arn = "${module.ecs.load_balancer_arn}"
+  nlb_dns = "${module.ecs.nlb_dns}"
+  container_ports = "${module.ecs.container_ports}"
+  task_names = "${module.ecs.task_names}"
 }
 
 /*

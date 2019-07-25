@@ -64,3 +64,52 @@ output "task_role_arn" {
 /*
 API Gateway - Allow API Gateway to access the Network ELB
 */
+data "aws_iam_policy_document" "tasks_api" {
+  statement {
+    effect = "Allow",
+    actions   = [
+      "ecs:RunTask"
+    ]
+    resources = [
+      "*"
+    ]
+  }
+}
+
+resource "aws_iam_policy" "tasks_api" {
+  name   = "${var.app_name}-${var.environment}-tasks-api"
+  description = "Allow API Gateway to run tasks"
+  path   = "/"
+  policy = "${data.aws_iam_policy_document.tasks_api.json}"
+}
+
+resource "aws_iam_role" "tasks_api" {
+  name = "${var.app_name}-${var.environment}-tasks-api"
+  description = "Allow API Gateway to run tasks"
+  assume_role_policy = <<POLICY
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "",
+      "Effect": "Allow",
+      "Principal": {
+        "Service": "apigateway.amazonaws.com"
+      },
+      "Action": "sts:AssumeRole"
+    }
+  ]
+}
+POLICY
+}
+
+resource "aws_iam_role_policy_attachment" "tasks_api" {
+  depends_on = ["aws_iam_policy.tasks_api", "aws_iam_role.tasks_api"]
+
+  role       = "${aws_iam_role.tasks_api.name}"
+  policy_arn = "${aws_iam_policy.tasks_api.arn}"
+}
+
+output "tasks_api_arn" {
+  value = "${aws_iam_role.tasks_api.arn}"
+}
